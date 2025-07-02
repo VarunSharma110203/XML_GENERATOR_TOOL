@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<release name="SEKMHC.BASE.6.0_0.03.000.2506.001" StartVersion="3.0000" EndVersion="3.0007" foldername="\Database Objects" specialInstructionsFileName="">
+<release name="SEKMHC.BASE.6.0_0.03.000.2506.001" StartVersion="3.0000" EndVersion="3.0008" foldername="\Database Objects" specialInstructionsFileName="">
   <files>
     <file number="1" RDL="No" Type="DM">
-      <name>Upgrade script module_InquiryDetails_1.3.sql</name>
+      <name>Upgrade_InquiryDetails_1.3.sql</name>
       <current_version>3.0000</current_version>
       <upgrade_version>3.0001</upgrade_version>
     </file>
@@ -11,30 +11,35 @@
       <current_version>3.0001</current_version>
       <upgrade_version>3.0002</upgrade_version>
     </file>
-    <file number="3" RDL="No" Type="SP/Func">
-      <name>csp_RdlSubReportPSMedications.sql</name>
+    <file number="3" RDL="No" Type="Script">
+      <name>Update_ValidationRules.sql</name>
       <current_version>3.0002</current_version>
       <upgrade_version>3.0003</upgrade_version>
     </file>
     <file number="4" RDL="No" Type="SP/Func">
-      <name>csp_SCGetElectronicEligibilityVerificationResponseText.sql</name>
+      <name>csp_RdlSubReportPSMedications.sql</name>
       <current_version>3.0003</current_version>
       <upgrade_version>3.0004</upgrade_version>
     </file>
     <file number="5" RDL="No" Type="SP/Func">
-      <name>csp_SCValidateScreenSpecificElectronicEligibility.sql</name>
+      <name>csp_SCGetElectronicEligibilityVerificationResponseText.sql</name>
       <current_version>3.0004</current_version>
       <upgrade_version>3.0005</upgrade_version>
     </file>
     <file number="6" RDL="No" Type="SP/Func">
-      <name>csp_SCVerifyElectronicEligibilityRequestData.sql</name>
+      <name>csp_SCValidateScreenSpecificElectronicEligibility.sql</name>
       <current_version>3.0005</current_version>
       <upgrade_version>3.0006</upgrade_version>
     </file>
-    <file number="7" RDL="No" Type="Script">
-      <name>InsertScript_SEKMHC_BASE_6_0_0_03_000_2506_001.sql</name>
+    <file number="7" RDL="No" Type="SP/Func">
+      <name>csp_SCVerifyElectronicEligibilityRequestData.sql</name>
       <current_version>3.0006</current_version>
       <upgrade_version>3.0007</upgrade_version>
+    </file>
+    <file number="8" RDL="No" Type="Script">
+      <name>InsertScript_SEKMHC_BASE_6_0_0_03_000_2506_001.sql</name>
+      <current_version>3.0007</current_version>
+      <upgrade_version>3.0008</upgrade_version>
     </file>
   </files>
 </release>
