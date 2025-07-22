@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL to XML Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .file-input-container {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .file-input-label {
+            display: block;
+            padding: 0.75rem 1.25rem;
+            background-color: #4f46e5;
+            color: white;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        .file-input-label:hover {
+            background-color: #4338ca;
+        }
+        #file-upload {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        #file-list {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen py-12">
+
+    <div class="w-full max-w-2xl mx-auto p-6 md:p-8 bg-white rounded-2xl shadow-lg">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">SQL to XML Generator</h1>
+            <p class="text-gray-500 mt-2">Create release XML from your SQL files with ease.</p>
+        </div>
+
+        <div class="flex flex-col gap-8">
+            <!-- Input Section -->
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Configuration</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="release-name" class="block text-sm font-medium text-gray-700 mb-1">Release Name</label>
+                        <input type="text" id="release-name" value="SEKMHC.BASE.6.0_0.03.000.2506.001" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="start-version" class="block text-sm font-medium text-gray-700 mb-1">Start Version</label>
+                        <input type="number" id="start-version" value="3.0000" step="0.0001" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">SQL Files Folder</label>
+                        <div class="file-input-container">
+                            <label for="file-upload" class="file-input-label">Select Folder</label>
+                            <input type="file" id="file-upload" webkitdirectory directory multiple>
+                        </div>
+                        <div id="file-list" class="mt-2 text-sm text-gray-600">No folder selected.</div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <button id="generate-btn" class="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Generate XML
+                    </button>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Generated XML</h2>
+                <div class="relative">
+                    <pre id="xml-output" class="bg-white p-4 rounded-md border border-gray-200 h-96 overflow-auto text-sm whitespace-pre-wrap word-wrap-break-word"><code id="xml-code-block">XML will appear here...</code></pre>
+                    <button id="copy-btn" class="absolute top-2 right-2 bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 disabled:opacity-50" disabled>Copy</button>
+                </div>
+                 <button id="download-btn" class="w-full mt-4 bg-green-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                        Download XML
+                </button>
+            </div>
+        </div>
+        
+        <!-- Message Modal -->
+        <div id="message-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Success!</h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p class="text-sm text-gray-500" id="modal-message">XML copied to clipboard.</p>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="modal-ok-btn" class="px-4 py-2 bg-indigo-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                            OK
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Element References ---
+        const releaseNameInput = document.getElementById('release-name');
+        const startVersionInput = document.getElementById('start-version');
+        const fileUploadInput = document.getElementById('file-upload');
+        const fileListDisplay = document.getElementById('file-list');
+        const generateBtn = document.getElementById('generate-btn');
+        const xmlCodeBlock = document.getElementById('xml-code-block'); // Target the <code> tag
+        const copyBtn = document.getElementById('copy-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const messageModal = document.getElementById('message-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalOkBtn = document.getElementById('modal-ok-btn');
+
+        let sqlFiles = [];
+
+        // --- Event Listeners ---
+        fileUploadInput.addEventListener('change', handleFileSelection);
+        generateBtn.addEventListener('click', handleXmlGeneration);
+        copyBtn.addEventListener('click', copyToClipboard);
+        downloadBtn.addEventListener('click', downloadXmlFile);
+        modalOkBtn.addEventListener('click', () => messageModal.classList.add('hidden'));
+
+        /**
+         * Handles the selection of files from the folder input.
+         * @param {Event} event - The file input change event.
+         */
+        function handleFileSelection(event) {
+            sqlFiles = Array.from(event.target.files).filter(file => file.name.endsWith('.sql'));
+            if (sqlFiles.length > 0) {
+                fileListDisplay.textContent = `${sqlFiles.length} SQL file(s) selected.`;
+                generateBtn.disabled = false;
+            } else {
+                fileListDisplay.textContent = 'No .sql files found in the selected folder.';
+                generateBtn.disabled = true;
+            }
+        }
+
+        /**
+         * Main function to trigger XML generation process.
+         */
+        function handleXmlGeneration() {
+            if (sqlFiles.length === 0) {
+                showModal('Error', 'Please select a folder containing SQL files first.');
+                return;
+            }
+
+            const releaseName = releaseNameInput.value;
+            const startVersion = parseFloat(startVersionInput.value);
+
+            if (!releaseName || isNaN(startVersion)) {
+                showModal('Error', 'Please provide a valid Release Name and Start Version.');
+                return;
+            }
+            
+            try {
+                const generatedXml = generateXml(releaseName, startVersion, sqlFiles);
+                xmlCodeBlock.textContent = generatedXml; // Set text content of the <code> tag
+                copyBtn.disabled = false;
+                downloadBtn.disabled = false;
+            } catch (error) {
+                console.error("Error generating XML:", error);
+                showModal('Error', 'An unexpected error occurred during XML generation. Check the console for details.');
+            }
+        }
+
+        /**
+         * Determines the priority and type of a file based on its name.
+         * This function is a JavaScript implementation of the user's Python logic.
+         * @param {string} filename - The name of the file.
+         * @param {string} releaseName - The base release name for identifying the release note script.
+         * @returns {{priority: number, type: string}} An object containing the priority and type.
+         */
+        function getPriorityAndType(filename, releaseName) {
+            const name = filename.toLowerCase();
+            const releaseFilenameFormat = releaseName.replace(/\./g, "_").toLowerCase();
+            const releasePattern = `insertscript_${releaseFilenameFormat}.sql`;
+
+            if (name === releasePattern) {
+                return { priority: 5, type: "Script" }; // Release note comes last
+            } else if (name.includes("upgrade")) {
+                return { priority: 1, type: "DM" };
+            } else if (name.includes("insert")) {
+                return { priority: 2, type: "Script" };
+            } else if (name.includes("update")) {
+                return { priority: 3, type: "Script" };
+            } else {
+                return { priority: 4, type: "SP/Func" };
+            }
+        }
+
+        /**
+         * Generates the XML string from the provided data.
+         * @param {string} releaseName - The name of the release.
+         * @param {number} startVersion - The starting version number.
+         * @param {File[]} files - An array of File objects.
+         * @returns {string} The formatted XML string.
+         */
+        function generateXml(releaseName, startVersion, files) {
+            // 1. Collect and prioritize files
+            let allFiles = files.map(file => {
+                const { priority, type } = getPriorityAndType(file.name, releaseName);
+                return { priority, type, name: file.name };
+            });
+
+            // 2. Sort files based on priority
+            allFiles.sort((a, b) => a.priority - b.priority);
+
+            // 3. Generate XML structure
+            const endVersion = (startVersion + allFiles.length * 0.0001).toFixed(4);
+
+            let xmlString = `<?xml version="1.0" encoding="utf-8"?>\n`;
+            xmlString += `<release name="${releaseName}" StartVersion="${startVersion.toFixed(4)}" EndVersion="${endVersion}" foldername="\\\\Database Objects" specialInstructionsFileName="">\n`;
+            xmlString += `  <files>\n`;
+
+            let currentVersion = startVersion;
+
+            // 4. Add file entries to XML
+            allFiles.forEach((file, index) => {
+                const upgradeVersion = parseFloat((currentVersion + 0.0001).toFixed(4));
+                xmlString += `    <file number="${index + 1}" RDL="No" Type="${file.type}">\n`;
+                xmlString += `      <name>${file.name}</name>\n`;
+                xmlString += `      <current_version>${currentVersion.toFixed(4)}</current_version>\n`;
+                xmlString += `      <upgrade_version>${upgradeVersion.toFixed(4)}</upgrade_version>\n`;
+                xmlString += `    </file>\n`;
+                currentVersion = upgradeVersion;
+            });
+
+            xmlString += `  </files>\n`;
+            xmlString += `</release>\n`;
+
+            return xmlString;
+        }
+
+        /**
+         * Copies the generated XML from the output area to the clipboard.
+         * Uses a fallback for older browsers.
+         */
+        function copyToClipboard() {
+            const textToCopy = xmlCodeBlock.textContent; // Copy from the <code> tag
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy)
+                    .then(() => showModal('Success', 'XML copied to clipboard!'))
+                    .catch(err => {
+                        console.error('Failed to copy with navigator.clipboard:', err);
+                        fallbackCopyTextToClipboard(textToCopy);
+                    });
+            } else {
+                fallbackCopyTextToClipboard(textToCopy);
+            }
+        }
+
+        /**
+         * Fallback method for copying text to clipboard for non-secure contexts or older browsers.
+         * @param {string} text - The text to be copied.
+         */
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showModal('Success', 'XML copied to clipboard!');
+                } else {
+                    showModal('Error', 'Could not copy text.');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showModal('Error', 'Could not copy text.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        /**
+         * Triggers the download of the generated XML as a file.
+         */
+        function downloadXmlFile() {
+            const xmlContent = xmlCodeBlock.textContent; // Download from the <code> tag
+            const blob = new Blob([xmlContent], { type: 'application/xml;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'release_output.xml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        /**
+         * Displays a modal with a custom message.
+         * @param {string} title - The title for the modal.
+         * @param {string} message - The message to display in the modal.
+         */
+        function showModal(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            messageModal.classList.remove('hidden');
+        }
+
+    </script>
+</body>
+</html>
