@@ -67,8 +67,6 @@ Support JSON/YAML-based release templates
 
 Add validation for missing or duplicate scripts
 
-📄 License
-MIT License
 
 🙋‍♂️ Author
 Varun Sharma
